@@ -890,7 +890,11 @@ actual arch.
             if view.env.context.get('inherit_branding'):
                 view.inherit_branding(arch)
             self._add_validation_flag(combined_arch, view, arch)
-            combined_arch = view.apply_inheritance_specs(combined_arch, arch)
+            try:
+                combined_arch = view.apply_inheritance_specs(combined_arch, arch)
+            except Exception as e:
+                _logger.error(f"Error while applying inheritance specs for view {view}, parent: {etree.tostring(combined_arch)}, spec: {etree.tostring(arch)}: {e}")
+                raise
 
             for child_view in reversed(hierarchy[view]):
                 if child_view.mode == 'primary':

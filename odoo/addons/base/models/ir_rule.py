@@ -218,15 +218,18 @@ class IrRule(models.Model):
 
         resolution_info = _("If you really, really need access, perhaps you can win over your friendly administrator with a batch of freshly baked cookies.")
 
-        if not self.user_has_groups('base.group_no_one') or not self.env.user.has_group('base.group_user'):
-            records.invalidate_recordset()
-            return AccessError(f"{operation_error}\n{failing_model}\n\n{resolution_info}")
+        # if not self.user_has_groups('base.group_no_one') or not self.env.user.has_group('base.group_user'):
+        #     records.invalidate_recordset()
+        #     return AccessError(f"{operation_error}\n{failing_model}\n\n{resolution_info}")
 
         # This extended AccessError is only displayed in debug mode.
         # Note that by default, public and portal users do not have
         # the group "base.group_no_one", even if debug mode is enabled,
         # so it is relatively safe here to include the list of rules and record names.
         rules = self._get_failing(records, mode=operation).sudo()
+        _logger.info(
+            f"Access Denied by record rules for operation: {operation} on record ids: {records.ids[:6]}, uid: {self._uid}, model: {model}, rules: ({rules.mapped('name')}, {rules}), company_ids: {self.env.user.company_ids})"
+        )
 
         records_sudo = records[:6].sudo()
         company_related = any('company_id' in (r.domain_force or '') for r in rules)
