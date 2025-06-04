@@ -769,10 +769,20 @@ def route(route=None, **routing):
             if params_ko:
                 _logger.warning("%s called ignoring args %s", fname, params_ko)
 
-            result = endpoint(self, *args, **params_ok)
-            if routing['type'] == 'http':  # _generate_routing_rules() ensures type is set
-                return Response.load(result)
-            return result
+            try:
+                result = endpoint(self, *args, **params_ok)
+                if (
+                    routing["type"] == "http"
+                ):  # _generate_routing_rules() ensures type is set
+                    return Response.load(result)
+                return result
+
+            except Exception as e:
+                _logger.error(
+                    f"endpoint {endpoint} ({fname}) raised an exception: {e!r}",
+                    exc_info=True,
+                )
+                raise
 
         route_wrapper.original_routing = routing
         route_wrapper.original_endpoint = endpoint
@@ -1090,7 +1100,6 @@ class Session(collections.abc.MutableMapping):
 
     def touch(self):
         self.is_dirty = True
-
 
 
 # =========================================================
@@ -1945,7 +1954,14 @@ class HttpDispatcher(Dispatcher):
                 raise werkzeug.exceptions.BadRequest('Session expired (invalid CSRF token)')
 
         if self.request.db:
-            return self.request.registry['ir.http']._dispatch(endpoint)
+            try:
+                return self.request.registry["ir.http"]._dispatch(endpoint)
+
+            except Exception as exc:
+                _logger.error(
+                    f"Error while dispatching request to {endpoint.__name__} with args {args}: {exc}"
+                )
+                raise
         else:
             return endpoint(**self.request.params)
 

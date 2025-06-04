@@ -6,6 +6,7 @@ import base64
 import copy
 import itertools
 import json
+import logging
 import pytz
 
 from odoo import _, _lt, api, fields, models
@@ -17,6 +18,7 @@ from odoo.tools.misc import OrderedSet, get_lang
 from odoo.exceptions import UserError
 from collections import defaultdict
 
+_logger = logging.getLogger(__name__)
 SEARCH_PANEL_ERROR_MESSAGE = _lt("Too many items to display.")
 
 def is_true_domain(domain):
@@ -160,10 +162,17 @@ class Base(models.AbstractModel):
                         )
                         co_records = co_records.browse(ids_to_read)
 
-                    x2many_data = {
-                        vals['id']: vals
-                        for vals in co_records.web_read(field_spec['fields'])
-                    }
+                    try:
+                        x2many_data = {
+                            vals["id"]: vals
+                            for vals in co_records.web_read(field_spec["fields"])
+                        }
+
+                    except Exception as e:
+                        _logger.error(
+                            f"Error reading {co_records} with fields {field_spec['fields']}: {e}"
+                        )
+                        raise
 
                     for values in values_list:
                         values[field_name] = [x2many_data.get(id_) or {'id': id_} for id_ in values[field_name]]
@@ -457,7 +466,6 @@ class Base(models.AbstractModel):
 
         return domain_image
 
-
     @api.model
     def _search_panel_global_counters(self, values_range, parent_name):
         """
@@ -534,7 +542,6 @@ class Base(models.AbstractModel):
         # we keep initial order
         return [rec for rec in records if records_to_keep.get(rec['id'])]
 
-
     @api.model
     def _search_panel_selection_range(self, field_name, **kwargs):
         """
@@ -552,7 +559,6 @@ class Base(models.AbstractModel):
                     { 'id': id, 'display_name': display_name, ('__count': c,) }
                 with key '__count' set if enable_counters is True
         """
-
 
         enable_counters = kwargs.get('enable_counters')
         expand = kwargs.get('expand')
@@ -577,7 +583,6 @@ class Base(models.AbstractModel):
             selection_range.append(values)
 
         return selection_range
-
 
     @api.model
     def search_panel_select_range(self, field_name, **kwargs):
@@ -707,7 +712,6 @@ class Base(models.AbstractModel):
             'parent_field': parent_name,
             'values': list(field_range.values()),
         }
-
 
     @api.model
     def search_panel_select_multi_range(self, field_name, **kwargs):
@@ -1116,7 +1120,6 @@ class Base(models.AbstractModel):
                 translations['en_US'] = values[field_name]
                 translations[self.env.lang or 'en_US'] = values[field_name]
                 self.update_field_translations(field_name, translations)
-
 
 
 class ResCompany(models.Model):

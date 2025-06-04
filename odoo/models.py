@@ -3772,6 +3772,12 @@ class BaseModel(metaclass=MetaModel):
         data = [(record, {'id': record.id}) for record in self]
         use_display_name = (load == '_classic_read')
         for name in fnames:
+            if name not in self._fields:
+                _logger.warning(
+                    f"Field {name!r} does not exist on model {self._name!r}."
+                )
+                continue
+
             field = self._fields[name]
             if field.type == 'properties':
                 values_list = []
@@ -3797,6 +3803,13 @@ class BaseModel(metaclass=MetaModel):
                     vals[name] = convert(record[name], record, use_display_name)
                 except MissingError:
                     vals.clear()
+
+                except Exception as e:
+                    _logger.error(
+                        f"Error while converting field {name!r} for record {record}: {e}"
+                    )
+                    raise
+
         result = [vals for record, vals in data if vals]
 
         return result
@@ -4013,7 +4026,6 @@ class BaseModel(metaclass=MetaModel):
             res = self.read(LOG_ACCESS_COLUMNS)
         else:
             res = [{'id': x} for x in self.ids]
-
 
         xml_data = defaultdict(list)
         imds = IrModelData.search_read(
@@ -6924,11 +6936,15 @@ class BaseModel(metaclass=MetaModel):
                 real_records = self - new_records
                 records = model.browse()
                 if real_records:
-                    records = model.search([(field.name, 'in', real_records.ids)], order='id')
+                    records = model.search(
+                        [(field.name, "in", real_records.ids)], order="id"
+                    )
                 if new_records:
                     cache_records = self.env.cache.get_records(model, field)
                     new_ids = set(self._ids)
-                    records |= cache_records.filtered(lambda r: not set(r[field.name]._ids).isdisjoint(new_ids))
+                    records |= cache_records.filtered(
+                        lambda r: not set(r[field.name]._ids).isdisjoint(new_ids)
+                    )
 
             yield from records._modified_triggers(subtree)
 
