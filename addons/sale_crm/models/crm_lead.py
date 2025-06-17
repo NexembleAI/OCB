@@ -72,7 +72,8 @@ class CrmLead(models.Model):
         return [('state', 'in', ('draft', 'sent', 'cancel'))]
 
     def _get_lead_quotation_domain(self):
-        return [('state', 'in', ('draft', 'sent'))]
+        # PJ: Added sale to match with v11
+        return [("state", "in", ("draft", "sent", "sale"))]
 
     def _get_lead_sale_order_domain(self):
         return [('state', 'not in', ('draft', 'sent', 'cancel'))]
