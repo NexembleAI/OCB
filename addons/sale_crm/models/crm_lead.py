@@ -69,14 +69,16 @@ class CrmLead(models.Model):
         return action
 
     def _get_action_view_sale_quotation_domain(self):
-        return [('state', 'in', ('draft', 'sent', 'cancel'))]
+        # PJ: Added sale to match with v11
+        return [("state", "in", ("draft", "sent", "sale", "cancel"))]
 
     def _get_lead_quotation_domain(self):
         # PJ: Added sale to match with v11
         return [("state", "in", ("draft", "sent", "sale"))]
 
     def _get_lead_sale_order_domain(self):
-        return [('state', 'not in', ('draft', 'sent', 'cancel'))]
+        # PJ: Added sale to match with v11
+        return [("state", "not in", ("draft", "sent", "sale", "cancel"))]
 
     def _prepare_opportunity_quotation_context(self):
         """ Prepares the context for a new quotation (sale.order) by sharing the values of common fields """
