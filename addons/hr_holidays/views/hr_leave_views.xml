@@ -244,6 +244,9 @@
             <field name="can_approve" invisible="1"/>
             <field name="can_cancel" invisible="1"/>
             <field name="has_mandatory_day" invisible="1"/>
+            <field name="request_unit_hours" invisible="1"/>
+            <field name="employee_company_id" invisible="1"/>
+            <field name="holiday_status_id" invisible="1"/>
             <header>
                 <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="id == False or state != 'draft' or not active"/>
                 <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="not active or not can_approve or state != 'confirm'"/>
@@ -256,6 +259,7 @@
             </header>
             <sheet>
                 <widget name="web_ribbon" title="Canceled" bg_color="text-bg-danger" invisible="active"/>
+                <field name="holiday_type" invisible="1" readonly="state not in ['confirm', 'draft']"/>
                 <div class="alert alert-info" role="alert" invisible="not request_unit_hours or not tz_mismatch or holiday_type == 'category'">
                     <span invisible="holiday_type != 'employee'">
                         The employee has a different timezone than yours! Here dates and times are displayed in the employee's timezone
@@ -269,7 +273,6 @@
                     (<field name="tz"/>).
                 </div>
                 <field name="tz_mismatch" invisible="1"/>
-                <field name="holiday_type" invisible="1" readonly="state not in ['confirm', 'draft']"/>
                 <field name="leave_type_request_unit" invisible="1"/>
                 <div class="o_hr_leave_content row">
                     <div class="o_hr_leave_column col_left col-md-6 col-12">
@@ -280,7 +283,6 @@
                         </div>
                         <field name="leave_type_increases_duration" invisible="True"/>
                         <group name="col_left">
-                            <field name="employee_company_id" invisible="1"/>
                             <field name="holiday_status_id" force_save="1"
                                 domain="[
                                     '|',
