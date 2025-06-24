@@ -532,7 +532,12 @@ class ResConfigSettings(models.TransientModel, ResConfigModuleInstallationMixin)
             else:
                 value = self[name]
             if name not in current_settings or value != current_settings[name]:
-                IrDefault.set(model, field, value)
+                try:
+                    IrDefault.set(model, field, value)
+                except Exception as e:
+                    _logger.error(
+                        f"Error setting default value for field {name} ({field}) on model {model}: {e}"
+                    )
 
         # group fields: modify group / implied groups
         for name, groups, implied_group in sorted(classified['group'], key=lambda k: self[k[0]]):
