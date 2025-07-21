@@ -3498,3 +3498,16 @@ class AccountMoveLine(models.Model):
         This method is overridden in the sale order module.
         '''
         return self.env['account.move.line']
+
+    def _set_additional_fields(self, invoice):
+        """Some modules, such as Purchase, provide a feature to add automatically pre-filled
+        invoice lines. However, these modules might not be aware of extra fields which are
+        added by extensions of the accounting module.
+        This method is intended to be overridden by these extensions, so that any new field can
+        easily be auto-filled as well.
+        :param invoice : account.invoice corresponding record
+        :rtype line : account.invoice.line record
+
+        *Still used in some of the custom modules
+        """
+        pass

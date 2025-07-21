@@ -42,7 +42,7 @@ from collections.abc import MutableMapping
 from contextlib import closing
 from inspect import getmembers, currentframe
 from operator import attrgetter, itemgetter
-from typing import Dict, List
+from typing import Container, Dict, List
 
 import babel
 import babel.dates
@@ -5191,7 +5191,13 @@ class BaseModel(metaclass=MetaModel):
         Rule = self.env['ir.rule']
         domain = Rule._compute_domain(self._name, mode)
         if domain:
-            expression.expression(domain, self.sudo(), self._table, query)
+            try:
+                expression.expression(domain, self.sudo(), self._table, query)
+
+            except ValueError as e:
+                _logger.error(
+                    f"Error while applying ir.rule on {self._name} on {query} with mode {mode}:{e}"
+                )
 
     def _order_to_sql(self, order: str, query: Query, alias: (str | None) = None,
                       reverse: bool = False) -> SQL:
@@ -6247,8 +6253,40 @@ class BaseModel(metaclass=MetaModel):
                 if key:
                     model = self.browse()
                     for fname in key.split('.'):
-                        field = model._fields[fname]
-                        model = model[fname]
+                        try:
+                            field = model._fields[fname]
+                            model = model[fname]
+
+                        except ValueError as e:
+                            _logger.erro(
+                                f"Invalid field {fname!r} in domain {domain!r} on model {model._name!r}: {e}"
+                            )
+                            if (
+                                field
+                                in (
+                                    "create_uid",
+                                    "write_uid",
+                                    "create_date",
+                                    "write_date",
+                                )
+                                and model._auto is False
+                            ):
+                                # these fields are not in the model, but are
+                                # always available in the cache
+                                field = None
+                                stack.append(
+                                    set(
+                                        self.with_context(active_test=False)
+                                        .search(
+                                            [("id", "in", self.ids), leaf], order="id"
+                                        )
+                                        ._ids
+                                    )
+                                )
+                                continue
+
+                            else:
+                                raise e
 
                 if comparator in ('like', 'ilike', '=like', '=ilike', 'not ilike', 'not like'):
                     value_esc = value.replace('_', '?').replace('%', '*').replace('[', '?')

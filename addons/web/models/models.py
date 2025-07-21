@@ -69,13 +69,28 @@ class Base(models.AbstractModel):
         }
 
     def web_save(self, vals, specification: Dict[str, Dict], next_id=None) -> List[Dict]:
+        _logger.info(
+            f"web_save: Saving {self._name} with vals {vals} and next_id {next_id}"
+        )
         if self:
             self.write(vals)
         else:
             self = self.create(vals)
+            if self is None:
+                _logger.error(f"web_save: Error creating record with vals {vals}")
         if next_id:
             self = self.browse(next_id)
-        return self.with_context(bin_size=True).web_read(specification)
+            if self is None:
+                _logger.error(f"web_save: Error getting record with vals {vals}")
+
+        try:
+            return self.with_context(bin_size=True).web_read(specification)
+
+        except Exception:
+            _logger.error(
+                f"web_save: Error reading {self} ({next_id}) with fields {specification}: {vals}"
+            )
+            raise
 
     def web_read(self, specification: Dict[str, Dict]) -> List[Dict]:
         fields_to_read = list(specification) or ['id']

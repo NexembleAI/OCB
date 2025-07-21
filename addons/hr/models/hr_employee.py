@@ -228,7 +228,7 @@ class HrEmployeePrivate(models.Model):
         return employees
 
     def fetch(self, field_names):
-        if self.check_access_rights('read', raise_exception=False):
+        if self.check_access_rights("read", raise_exception=False):
             return super().fetch(field_names)
 
         # HACK: retrieve publicly available values from hr.employee.public and

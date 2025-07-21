@@ -468,7 +468,6 @@ class AccountMove(models.Model):
                     })]
 
 
-
 class AccountMoveLine(models.Model):
     """ Override AccountInvoice_line to add the link to the purchase order line it is related to"""
     _inherit = 'account.move.line'
@@ -479,4 +478,5 @@ class AccountMoveLine(models.Model):
     def _copy_data_extend_business_fields(self, values):
         # OVERRIDE to copy the 'purchase_line_id' field as well.
         super(AccountMoveLine, self)._copy_data_extend_business_fields(values)
-        values['purchase_line_id'] = self.purchase_line_id.id
+        if self.purchase_line_id:
+            values["purchase_line_id"] = self.purchase_line_id.id

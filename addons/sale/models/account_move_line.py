@@ -19,7 +19,8 @@ class AccountMoveLine(models.Model):
     def _copy_data_extend_business_fields(self, values):
         # OVERRIDE to copy the 'sale_line_ids' field as well.
         super(AccountMoveLine, self)._copy_data_extend_business_fields(values)
-        values['sale_line_ids'] = [(6, None, self.sale_line_ids.ids)]
+        if self.sale_line_ids:
+            values["sale_line_ids"] = [(6, None, self.sale_line_ids.ids)]
 
     def _prepare_analytic_lines(self):
         """ Note: This method is called only on the move.line that having an analytic distribution, and

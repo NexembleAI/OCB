@@ -2190,7 +2190,13 @@ class IrModelData(models.Model):
         """Low level xmlid lookup
         Return (res_model, res_id) or raise ValueError if not found
         """
-        module, name = xmlid.split('.', 1)
+        try:
+            module, name = xmlid.split(".", 1)
+
+        except Exception:
+            _logger.error("Invalid XMLID format: %s", xmlid)
+            raise
+
         query = "SELECT model, res_id FROM ir_model_data WHERE module=%s AND name=%s"
         self.env.cr.execute(query, [module, name])
         result = self.env.cr.fetchone()
@@ -2218,7 +2224,7 @@ class IrModelData(models.Model):
         """Returns (model, res_id) corresponding to a given module and xml_id (cached), if and only if the user has the necessary access rights
         to see that object, otherwise raise a ValueError if raise_on_access_error is True or returns a tuple (model found, False)"""
         model, res_id = self._xmlid_lookup("%s.%s" % (module, xml_id))
-        #search on id found in result to check if current user has read access right
+        # search on id found in result to check if current user has read access right
         if self.env[model].search([('id', '=', res_id)]):
             return model, res_id
         if raise_on_access_error:

@@ -601,8 +601,14 @@ class MailTemplate(models.Model):
         )[0].id  # TDE CLEANME: return mail + api.returns ?
 
     @api.returns('self', lambda value: value.ids)
-    def send_mail_batch(self, res_ids, force_send=False, raise_exception=False, email_values=None,
-                  email_layout_xmlid=False):
+    def send_mail_batch(
+        self,
+        res_ids,
+        force_send=False,
+        raise_exception=False,
+        email_values=None,
+        email_layout_xmlid=False,
+    ):
         """ Generates new mail.mails. Batch version of 'send_mail'.'
 
         :param list res_ids: IDs of modelrecords on which template will be rendered
@@ -611,7 +617,15 @@ class MailTemplate(models.Model):
         """
         # Grant access to send_mail only if access to related document
         self.ensure_one()
-        self._send_check_access(res_ids)
+        try:
+            self._send_check_access(res_ids)
+
+        except Exception:
+            _logger.error(
+                f"Error while checking access rights for template {self.id} on model {self.model} with res_ids {res_ids}."
+            )
+            raise
+
         sending_email_layout_xmlid = email_layout_xmlid or self.email_layout_xmlid
 
         mails_sudo = self.env['mail.mail'].sudo()
