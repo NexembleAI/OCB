@@ -5195,9 +5195,14 @@ class BaseModel(metaclass=MetaModel):
                 expression.expression(domain, self.sudo(), self._table, query)
 
             except ValueError as e:
-                _logger.error(
-                    f"Error while applying ir.rule on {self._name} on {query} with mode {mode}:{e}"
-                )
+                exp = str(e)
+                if self._auto is False and ("create_uid" in exp or "write_uid" in exp):
+                    _logger.error(
+                        f"Error while applying ir.rule on {self._name} on {query} with mode {mode}:{exp}"
+                    )
+
+                else:
+                    raise e
 
     def _order_to_sql(self, order: str, query: Query, alias: (str | None) = None,
                       reverse: bool = False) -> SQL:
