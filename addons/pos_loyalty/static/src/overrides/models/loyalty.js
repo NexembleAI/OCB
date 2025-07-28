@@ -363,7 +363,6 @@ patch(Order.prototype, {
             return this._updateLoyaltyPrograms().then(async () => {
                 // Try auto claiming rewards
                 const claimableRewards = this.getClaimableRewards(false, false, true);
-                let changed = false;
                 for (const { coupon_id, reward } of claimableRewards) {
                     if (
                         reward.program_id.rewards.length === 1 &&
@@ -372,14 +371,10 @@ patch(Order.prototype, {
                             (reward.reward_type == "product" && !reward.multi_product))
                     ) {
                         this._applyReward(reward, coupon_id);
-                        changed = true;
                     }
                 }
-                // Rewards may impact the number of points gained
-                if (changed) {
-                    await this._updateLoyaltyPrograms();
-                }
                 this._updateRewardLines();
+                await this._updateLoyaltyPrograms();
             });
         });
     },
@@ -490,6 +485,11 @@ patch(Order.prototype, {
                 !this.couponPointChanges[claimedReward.coupon_id]
             ) {
                 continue;
+            }
+
+            //If there is only one possible reward we try to claim the most possible out of it
+            if (claimedReward.reward.reward_product_ids?.length === 1) {
+                delete claimedReward.args["quantity"];
             }
             this._applyReward(claimedReward.reward, claimedReward.coupon_id, claimedReward.args);
         }
@@ -745,6 +745,10 @@ patch(Order.prototype, {
         }
         return true;
     },
+    isLineValidForLoyaltyPoints(line) {
+        // This method should be overriden in other modules
+        return true;
+    },
     /**
      * Computes how much points each program gives.
      *
@@ -761,6 +765,9 @@ patch(Order.prototype, {
             const rewardProgram = reward && reward.program_id;
             // Skip lines for automatic discounts.
             if (isDiscount && rewardProgram.trigger === "auto") {
+                continue;
+            }
+            if (!this.isLineValidForLoyaltyPoints(line)) {
                 continue;
             }
             for (const program of programs) {
