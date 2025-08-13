@@ -963,7 +963,7 @@
                                     <field name="invoice_payment_term_id"
                                            context="{'example_date': invoice_date, 'example_amount': tax_totals['amount_total']}"
                                            placeholder="Payment Terms"
-                                           options="{'no_quick_create':True}" readonly="state in ['cancel', 'posted']"/>
+                                           readonly="state in ['cancel', 'posted']"/>
                                 </div>
                                 <field name="delivery_date" invisible="not show_delivery_date" readonly="state != 'draft'"/>
                                 <label for="journal_id"

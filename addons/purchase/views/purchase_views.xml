@@ -408,7 +408,7 @@
                                 </group>
                                 <group name="invoice_info">
                                     <field name="invoice_status" invisible="state in ('draft', 'sent', 'to approve', 'cancel')"/>
-                                    <field name="payment_term_id" readonly="invoice_status == 'invoiced' or state == 'done'" options="{'no_create': True}"/>
+                                    <field name="payment_term_id" readonly="invoice_status == 'invoiced' or state == 'done'"/>
                                     <field name="fiscal_position_id" options="{'no_create': True}" readonly="invoice_status == 'invoiced' or state == 'done'"/>
                                 </group>
                             </group>

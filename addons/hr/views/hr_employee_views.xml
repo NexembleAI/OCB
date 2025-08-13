@@ -130,7 +130,7 @@
                             </page>
                             <page name="personal_information" string="Private Information" groups="hr.group_hr_user">
                                 <group>
-                                    <group string="Private Contact">
+                                    <group string="Private Contact" name="private_contact">
                                         <label for="private_street" string="Private Address"/>
                                         <div class="o_address_format">
                                             <field name="private_street" placeholder="Street..." class="o_address_street"/>
@@ -151,7 +151,7 @@
                                         </div>
                                         <field name="private_car_plate" />
                                     </group>
-                                    <group string="Family Status">
+                                    <group string="Family Status" name="family_status">
                                         <field name="marital"/>
                                         <field name="spouse_complete_name" invisible="marital not in ['married', 'cohabitant']"/>
                                         <field name="spouse_birthdate" invisible="marital not in ['married', 'cohabitant']"/>
@@ -161,11 +161,12 @@
                                         <field name="emergency_contact"/>
                                         <field name="emergency_phone" class="o_force_ltr"/>
                                     </group>
-                                    <group string="Education">
+                                    <group string="Education" name="education">
                                         <field name="certificate"/>
                                         <field name="study_field"/>
                                         <field name="study_school"/>
-                                        <separator name="has_work_permit" string="Work Permit"/>
+                                    </group>
+                                    <group name="has_work_permit" string="Work Permit">
                                         <field name="visa_no"/>
                                         <field name="permit_no"/>
                                         <field name="visa_expire"/>
@@ -173,7 +174,7 @@
                                         <field name="work_permit_name" invisible="1"/>
                                         <field name="has_work_permit" widget="work_permit_upload" filename="work_permit_name"/>
                                     </group>
-<group string="Citizenship" name="citizenship">
+                                    <group string="Citizenship" name="citizenship">
                                         <field name="country_id" options='{"no_open": True, "no_create": True}'/>
                                         <field name="identification_id"/>
                                         <field name="ssnid"/>
