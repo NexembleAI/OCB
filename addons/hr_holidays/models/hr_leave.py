@@ -222,7 +222,7 @@ class HolidaysRequest(models.Model):
         help='This area is automatically filled by the user who validate the time off with second level (If time off type need second validation)')
     can_reset = fields.Boolean('Can reset', compute='_compute_can_reset')
     can_approve = fields.Boolean('Can Approve', compute='_compute_can_approve')
-    can_cancel = fields.Boolean('Can Cancel', compute='_compute_can_cancel')
+    can_cancel = fields.Boolean('Can Cancel', compute='_compute_can_cancel', compute_sudo=True, readonly=False)
 
     attachment_ids = fields.One2many('ir.attachment', 'res_id', string="Attachments")
     # To display in form view
@@ -302,7 +302,7 @@ class HolidaysRequest(models.Model):
     is_hatched = fields.Boolean('Hatched', compute='_compute_is_hatched')
     is_striked = fields.Boolean('Striked', compute='_compute_is_hatched')
     has_mandatory_day = fields.Boolean(compute='_compute_has_mandatory_day')
-    leave_type_increases_duration = fields.Boolean(compute='_compute_leave_type_increases_duration')
+    leave_type_increases_duration = fields.Boolean(compute='_compute_leave_type_increases_duration', compute_sudo=True, readonly=False)
 
     _sql_constraints = [
         ('type_value',
@@ -325,7 +325,12 @@ class HolidaysRequest(models.Model):
     @api.depends('employee_id', 'employee_ids')
     def _compute_all_employees(self):
         for leave in self:
-            leave.all_employee_ids = leave.employee_id | leave.employee_ids
+            try:
+                leave.all_employee_ids = leave.employee_id | leave.employee_ids
+
+            except Exception as e:
+                _logger.error(f"Error computing all_employee_ids on {leave._name} for record {leave} with employee_id {leave.employee_id}")
+                raise e
 
     @api.depends_context('uid')
     def _compute_description(self):

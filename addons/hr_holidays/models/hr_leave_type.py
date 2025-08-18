@@ -341,7 +341,7 @@ class HolidaysType(models.Model):
         if order == self._order and employee:
             # retrieve all leaves, sort them, then apply offset and limit
             leaves = self.browse(super()._search(domain, access_rights_uid=access_rights_uid))
-            leaves = leaves.sorted(key=self._model_sorting_key, reverse=True)
+            leaves = leaves.sudo().sorted(key=self._model_sorting_key, reverse=True)
             leaves = leaves[offset:(offset + limit) if limit else None]
             return leaves._as_query()
         return super()._search(domain, offset, limit, order, access_rights_uid)
