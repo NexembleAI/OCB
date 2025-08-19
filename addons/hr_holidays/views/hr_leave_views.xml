@@ -305,12 +305,12 @@
                             <!-- half day or custom hours: only show one date -->
                             <label for="request_date_from" invisible="not request_unit_half and not request_unit_hours" string="Date" />
                             <label for="request_date_from" invisible="request_unit_half or request_unit_hours" string="Dates" />
-                            <div class="o_row" invisible="not request_unit_half and not request_unit_hours">
+                            <div class="o_row" invisible="not request_unit_half and not request_unit_hours" id="request_date_from">
                                 <field name="request_date_from" class="oe_inline" string="Date" readonly="state not in ('draft', 'confirm')" />
                                 <field name="request_date_from_period" invisible="not request_unit_half" required="request_unit_half" readonly="state not in ('draft', 'confirm')"/>
                             </div>
                             <!-- full days: show date start/end with daterange -->
-                            <div class="o_row" invisible="request_unit_half or request_unit_hours">
+                            <div class="o_row" invisible="request_unit_half or request_unit_hours" id="request_date_range">
                                 <field
                                     name="request_date_from"
                                     widget="daterange"
@@ -462,7 +462,7 @@
             <xpath expr="//div[@name='title']" position="attributes">
                 <attribute name="invisible">0</attribute>
             </xpath>
-            <xpath expr="//field[@name='holiday_status_id']" position="before">
+            <xpath expr="//group[@name='col_left']/field[@name='holiday_status_id']" position="before">
                 <field name="is_user_only_responsible" invisible="1"/>
                 <field name="holiday_type" string="Mode" groups="hr_holidays.group_hr_holidays_user" readonly="state not in ['confirm', 'draft']"/>
                 <field name="mode_company_id" string="Company" groups="hr_holidays.group_hr_holidays_user" invisible="holiday_type != 'company'" readonly="state not in ['confirm', 'draft']" required="holiday_type == 'company'"/>
