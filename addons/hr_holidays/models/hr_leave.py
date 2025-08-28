@@ -844,9 +844,9 @@ Attempting to double-book your time off won't magically make your vacation 2x be
                 elif leave.holiday_type == 'category':
                     target = leave.category_id.name
                 elif leave.employee_id:
-                    target = leave.employee_id.name
+                    target = leave.sudo().employee_id.name
                 else:
-                    target = ', '.join(leave.employee_ids.mapped('name'))
+                    target = ', '.join(leave.sudo().employee_ids.mapped('name'))
                 display_date = format_date(self.env, date_from_utc) or ""
                 if leave.leave_type_request_unit == 'hour':
                     if self.env.context.get('hide_employee_name') and 'employee_id' in self.env.context.get('group_by', []):
@@ -984,7 +984,7 @@ Attempting to double-book your time off won't magically make your vacation 2x be
 
         is_officer = self.env.user.has_group('hr_holidays.group_hr_holidays_user') or self.env.is_superuser()
         if not is_officer and values.keys() - {'attachment_ids', 'supported_attachment_ids', 'message_main_attachment_id'}:
-            if any(hol.date_from.date() < fields.Date.today() and hol.employee_id.leave_manager_id != self.env.user
+            if any(hol.date_from.date() < fields.Date.today() and hol.employee_id.sudo().leave_manager_id != self.env.user
                    and hol.state not in ('confirm', 'draft') for hol in self):
                 raise UserError(_('You must have manager rights to modify/validate a time off that already begun'))
 
@@ -1435,7 +1435,7 @@ Attempting to double-book your time off won't magically make your vacation 2x be
     def _notify_manager(self):
         leaves = self.filtered(lambda hol: (hol.validation_type == 'both' and hol.state in ['validate1', 'validate']) or (hol.validation_type == 'manager' and hol.state == 'validate'))
         for holiday in leaves:
-            responsible = holiday.employee_id.leave_manager_id.partner_id.ids
+            responsible = holiday.sudo().employee_id.leave_manager_id.partner_id.ids
             if responsible:
                 self.env['mail.thread'].sudo().message_notify(
                     partner_ids=responsible,
