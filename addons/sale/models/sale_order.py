@@ -2,6 +2,7 @@
 from collections import defaultdict
 from datetime import timedelta
 from itertools import groupby
+import logging
 
 from odoo import api, fields, models, SUPERUSER_ID, _
 from odoo.exceptions import AccessError, UserError, ValidationError
@@ -11,6 +12,8 @@ from odoo.tools import float_is_zero, format_amount, format_date, html_keep_url,
 from odoo.tools.sql import create_index
 
 from odoo.addons.payment import utils as payment_utils
+
+_logger = logging.getLogger(__name__)
 
 INVOICE_STATUS = [
     ('upselling', 'Upselling Opportunity'),
@@ -162,7 +165,7 @@ class SaleOrder(models.Model):
         string="Payment Terms",
         compute='_compute_payment_term_id',
         store=True, readonly=False, precompute=True, check_company=True,  # Unrequired company
-        domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]")
+        )
     pricelist_id = fields.Many2one(
         comodel_name='product.pricelist',
         string="Pricelist",
@@ -698,6 +701,7 @@ class SaleOrder(models.Model):
     @api.constrains('company_id', 'order_line')
     def _check_order_line_company_id(self):
         for order in self:
+            _logger.debug(f"Checking company of SO {order.name} (company: {order.company_id.name}) with {order.company_id._accessible_branches()}")
             invalid_companies = order.order_line.product_id.company_id.filtered(
                 lambda c: order.company_id not in c._accessible_branches()
             )
