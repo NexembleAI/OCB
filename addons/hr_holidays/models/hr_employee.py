@@ -128,3 +128,11 @@ class HrEmployee(models.Model):
             domain += [('department_ids', '=', False)]
 
         return self.env['hr.leave.mandatory.day'].search(domain)
+
+
+class HrEmployeePublic(models.Model):
+    _inherit = "hr.employee.public"
+
+    leave_manager_id = fields.Many2one(readonly=True)
+    is_absent = fields.Boolean(readonly=True)
+    hr_icon_display = fields.Selection(readonly=True)

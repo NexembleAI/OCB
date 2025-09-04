@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
+import logging
 
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
+
+_logger = logging.getLogger(__name__)
 
 
 class HolidaysType(models.Model):
@@ -100,7 +103,14 @@ class Holidays(models.Model):
             old_timesheets.holiday_id = False
             old_timesheets.unlink()
 
-        self.env['account.analytic.line'].sudo().create(vals_list)
+        try:
+            self.env["account.analytic.line"].sudo().create(vals_list)
+
+        except Exception as e:
+            _logger.error(
+                f"Error while creating timesheet for leave {self} with vals {vals_list}: {e}"
+            )
+            raise
 
     def _timesheet_prepare_line_values(self, index, work_hours_data, day_date, work_hours_count, project, task):
         self.ensure_one()

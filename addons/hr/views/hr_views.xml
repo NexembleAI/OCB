@@ -27,6 +27,7 @@
                 name="Employees"
                 action="open_view_employee_list_my"
                 parent="menu_hr_employee_payroll"
+                groups="group_hr_user"
                 sequence="1"/>
 
         <menuitem
@@ -34,6 +35,7 @@
             name="Directory"
             action="hr_employee_public_action"
             parent="menu_hr_root"
+            groups="base.group_user"
             sequence="4"/>
 
         <menuitem
