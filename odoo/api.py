@@ -465,8 +465,15 @@ def _call_kw_multi(method, self, args, kwargs):
     ids, args = args[0], args[1:]
     context, args, kwargs = split_context(method, args, kwargs)
     recs = self.with_context(context or {}).browse(ids)
-    _logger.debug("call %s.%s(%s)", recs, method.__name__, Params(args, kwargs))
+    # _logger.debug("call %s.%s(%s)", recs, method.__name__, Params(args, kwargs))
     result = method(recs, *args, **kwargs)
+    _logger.debug(
+        "call %s.%s(%s) = %s",
+        recs,
+        method.__name__,
+        Params(args, kwargs),
+        pformat(result),
+    )
     return downgrade(method, result, recs, args, kwargs)
 
 
