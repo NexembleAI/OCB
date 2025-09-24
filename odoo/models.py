@@ -6494,11 +6494,24 @@ class BaseModel(metaclass=MetaModel):
                 try:
                     for id_ in some_ids:
                         record = model.browse(id_)
-                        vals = {
-                            f.name: convert(record, f, dirty_field_cache[f][id_])
-                            for f, ids in dirty_field_ids.items()
-                            if id_ in ids
-                        }
+                        vals = {}
+                        for f, ids in dirty_field_ids.items():
+                            if id_ in ids:
+                                if id_ in dirty_field_cache[f]:
+                                    vals[f.name] = convert(
+                                        record, f, dirty_field_cache[f][id_]
+                                    )
+
+                                else:
+                                    _logger.warning(
+                                        f"Missing cache value for {record} ({id_}) field {f.name} during flush"
+                                    )
+                                    dirty_field_cache[f][id_]
+                        # vals = {
+                        #     f.name: convert(record, f, dirty_field_cache[f][id_])
+                        #     for f, ids in dirty_field_ids.items()
+                        #     if id_ in ids
+                        # }
                         vals_ids[frozendict(vals)].append(id_)
                 except KeyError:
                     raise AssertionError(
