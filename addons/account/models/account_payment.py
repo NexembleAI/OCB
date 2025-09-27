@@ -34,10 +34,9 @@ class AccountPayment(models.Model):
         check_company=True,
         ondelete='restrict',
     )
-    is_internal_transfer = fields.Boolean(string="Internal Transfer",
-        readonly=False, store=True,
-        tracking=True,
-        compute="_compute_is_internal_transfer")
+    is_internal_transfer = fields.Boolean(
+        string="Internal Transfer", required=True, tracking=True, default=False
+    )
     qr_code = fields.Html(string="QR Code URL",
         compute="_compute_qr_code")
     paired_internal_transfer_payment_id = fields.Many2one('account.payment',
