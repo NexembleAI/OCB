@@ -42,8 +42,8 @@
             <field name="inherit_id" ref="product.product_product_tree_view"/>
             <field name="arch" type="xml">
                 <field name="type" position="after">
-                    <field name="qty_available" invisible="type != 'product'" string="On Hand" optional="show" decoration-danger="virtual_available &lt; 0" decoration-warning="virtual_available == 0" decoration-bf="1" groups="stock.group_stock_user"/>
-                    <field name="virtual_available" invisible="type != 'product'" string="Forecasted" optional="show" decoration-danger="virtual_available &lt; 0" decoration-warning="virtual_available == 0" groups="stock.group_stock_user"/>
+                    <field name="qty_available" invisible="type != 'product'" string="On Hand" optional="hide" decoration-danger="virtual_available &lt; 0" decoration-warning="virtual_available == 0" decoration-bf="1" groups="stock.group_stock_user"/>
+                    <field name="virtual_available" invisible="type != 'product'" string="Forecasted" optional="hide" decoration-danger="virtual_available &lt; 0" decoration-warning="virtual_available == 0" groups="stock.group_stock_user"/>
                 </field>
             </field>
         </record>
