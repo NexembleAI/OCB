@@ -89,7 +89,7 @@ class AccountAccount(models.Model):
         string="Internal Group",
         compute="_compute_internal_group", store=True, precompute=True,
     )
-    #has_unreconciled_entries = fields.Boolean(compute='_compute_has_unreconciled_entries',
+    # has_unreconciled_entries = fields.Boolean(compute='_compute_has_unreconciled_entries',
     #    help="The account has at least one unreconciled debit and credit since last time the invoices & payments matching was performed.")
     reconcile = fields.Boolean(string='Allow Reconciliation', tracking=True,
         compute='_compute_reconcile', store=True, readonly=False, precompute=True,
@@ -146,9 +146,14 @@ class AccountAccount(models.Model):
                     ('id', 'not in', records.ids),
                 ])
             if duplicates:
-                raise ValidationError(
+                # TODO: Check if duplicates have any issues with accountig. Currently, Synergy has duplicates.
+                _logger.error(
                     _("The code of the account must be unique per company!")
-                    + "\n" + "\n".join(f"- {duplicate.code} in {duplicate.company_id.name}" for duplicate in duplicates)
+                    + "\n"
+                    + "\n".join(
+                        f"- {duplicate.code} in {duplicate.company_id.name}"
+                        for duplicate in duplicates
+                    )
                 )
 
     @api.constrains('reconcile', 'internal_group', 'tax_ids')
@@ -756,7 +761,7 @@ class AccountAccount(models.Model):
 
     @api.ondelete(at_uninstall=False)
     def _unlink_except_account_set_on_customer(self):
-        #Checking whether the account is set as a property to any Partner or not
+        # Checking whether the account is set as a property to any Partner or not
         values = ['account.account,%s' % (account_id,) for account_id in self.ids]
         partner_prop_acc = self.env['ir.property'].sudo().search([('value_reference', 'in', values)], limit=1)
         if partner_prop_acc:
