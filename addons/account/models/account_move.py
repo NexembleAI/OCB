@@ -103,7 +103,6 @@ class AccountMove(models.Model):
     def _sequence_fixed_regex(self):
         return self.journal_id.sequence_override_regex or super()._sequence_fixed_regex
 
-
     # ==============================================================================================
     #                                          JOURNAL ENTRY
     # ==============================================================================================
@@ -740,6 +739,7 @@ class AccountMove(models.Model):
             return self.statement_line_ids.statement_id.journal_id[:1]
 
         journal_types = self._get_valid_journal_types()
+        _logger.info(f"Searching for a default journal for types {journal_types}")
         company = self.company_id or self.env.company
         domain = [
             *self.env['account.journal']._check_company_domain(company),
@@ -754,9 +754,15 @@ class AccountMove(models.Model):
             if currency_id and currency_id != company.currency_id.id:
                 currency_domain = domain + [('currency_id', '=', currency_id)]
                 journal = self.env['account.journal'].search(currency_domain, limit=1)
+            _logger.info(
+                f"Searching for a default journal with currency {currency_id}: found {journal!r}"
+            )
 
         if not journal:
             journal = self.env['account.journal'].search(domain, limit=1)
+            _logger.info(
+                f"Searching for a default journal without currency: found {journal!r}"
+            )
 
         if not journal:
             error_msg = _(
@@ -811,7 +817,6 @@ class AccountMove(models.Model):
 
         self.filtered(lambda m: not m.name and not move.quick_edit_mode).name = '/'
         self._inverse_name()
-
 
     @api.depends('journal_id', 'date')
     def _compute_highest_name(self):
@@ -1979,8 +1984,14 @@ class AccountMove(models.Model):
     def _check_journal_move_type(self):
         for move in self:
             if move.is_purchase_document(include_receipts=True) and move.journal_id.type != 'purchase':
+                _logger.error(
+                    f"Purchase document {move} in non-purchase journal {move.journal_id} ({move.journal_id.type})"
+                )
                 raise ValidationError(_("Cannot create a purchase document in a non purchase journal"))
             if move.is_sale_document(include_receipts=True) and move.journal_id.type != 'sale':
+                _logger.error(
+                    f"Sale document {move} in non-sale journal {move.journal_id} ({move.journal_id.type})"
+                )
                 raise ValidationError(_("Cannot create a sale document in a non sale journal"))
 
     @api.constrains('line_ids', 'fiscal_position_id', 'company_id')
@@ -2536,7 +2547,6 @@ class AccountMove(models.Model):
                     skip_account_move_synchronization=True,
                 )).write(vals)
 
-
                 # Reset the name of draft moves when changing the journal.
                 # Protected against holes in the pre-validation checks.
                 if 'journal_id' in vals and 'name' not in vals:
@@ -2701,7 +2711,7 @@ class AccountMove(models.Model):
         return self.state == 'posted' and not self.quick_edit_mode
 
     def _get_last_sequence_domain(self, relaxed=False):
-        #pylint: disable=sql-injection
+        # pylint: disable=sql-injection
         # EXTENDS account sequence.mixin
         self.ensure_one()
         if not self.date or not self.journal_id:
@@ -3006,7 +3016,7 @@ class AccountMove(models.Model):
     def _get_new_hash(self, secure_seq_number):
         """ Returns the hash to write on journal entries when they get posted"""
         self.ensure_one()
-        #get the only one exact previous move in the securisation sequence
+        # get the only one exact previous move in the securisation sequence
         prev_move = self.sudo().search([('state', '=', 'posted'),
                                  ('company_id', '=', self.company_id.id),
                                  ('journal_id', '=', self.journal_id.id),
@@ -3016,7 +3026,7 @@ class AccountMove(models.Model):
             raise UserError(
                _('An error occurred when computing the inalterability. Impossible to get the unique previous posted journal entry.'))
 
-        #build and return the hash
+        # build and return the hash
         return self._compute_hash(prev_move.inalterable_hash if prev_move else u'')
 
     def _compute_hash(self, previous_hash):
@@ -3047,7 +3057,7 @@ class AccountMove(models.Model):
                 for field in line._get_integrity_hash_fields():
                     k = 'line_%d_%s' % (line.id, field)
                     values[k] = _getattrstring(line, field)
-            #make the json serialization canonical
+            # make the json serialization canonical
             #  (https://tools.ietf.org/html/draft-staykov-hu-json-canonical-form-00)
             move.string_to_hash = dumps(values, sort_keys=True,
                                                 ensure_ascii=True, indent=None,
@@ -3775,7 +3785,6 @@ class AccountMove(models.Model):
                 ):
                     lines.with_context(move_reverse_cancel=move_reverse_cancel).reconcile()
         return reverse_moves
-
 
     def _reverse_moves(self, default_values_list=None, cancel=False):
         ''' Reverse a recordset of account.move.
