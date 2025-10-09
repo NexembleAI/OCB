@@ -739,7 +739,6 @@ class AccountMove(models.Model):
             return self.statement_line_ids.statement_id.journal_id[:1]
 
         journal_types = self._get_valid_journal_types()
-        _logger.info(f"Searching for a default journal for types {journal_types}")
         company = self.company_id or self.env.company
         domain = [
             *self.env['account.journal']._check_company_domain(company),
@@ -753,16 +752,10 @@ class AccountMove(models.Model):
             currency_id = self.currency_id.id or self._context.get('default_currency_id')
             if currency_id and currency_id != company.currency_id.id:
                 currency_domain = domain + [('currency_id', '=', currency_id)]
-                journal = self.env['account.journal'].search(currency_domain, limit=1)
-            _logger.info(
-                f"Searching for a default journal with currency {currency_id}: found {journal!r}"
-            )
+                journal = self.env["account.journal"].search(currency_domain, limit=1)
 
         if not journal:
-            journal = self.env['account.journal'].search(domain, limit=1)
-            _logger.info(
-                f"Searching for a default journal without currency: found {journal!r}"
-            )
+            journal = self.env["account.journal"].search(domain, limit=1)
 
         if not journal:
             error_msg = _(
