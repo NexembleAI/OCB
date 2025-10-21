@@ -1290,6 +1290,9 @@ class AccountMoveLine(models.Model):
 
             account_currency = account.currency_id
             if account_currency and account_currency != line.company_currency_id and account_currency != line.currency_id:
+                _logger.error(
+                    f"Account {account}, currency {account_currency} is not compatible with line {line}, company currency {line.company_currency_id} and line currency {line.currency_id}."
+                )
                 raise UserError(_('The account selected on your journal entry forces to provide a secondary currency. You should remove the secondary currency on the account.'))
 
             if account.allowed_journal_ids and journal not in account.allowed_journal_ids:
