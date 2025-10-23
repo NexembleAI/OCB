@@ -5,6 +5,9 @@ from odoo.tools import SQL, unique
 from odoo.tools.float_utils import float_round, float_compare
 from odoo.tools.misc import flatten
 from odoo.exceptions import UserError, ValidationError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class AnalyticMixin(models.AbstractModel):
     _name = 'analytic.mixin'
@@ -123,7 +126,14 @@ class AnalyticMixin(models.AbstractModel):
         """ Format the analytic_distribution float value, so equality on analytic_distribution can be done """
         decimal_precision = self.env['decimal.precision'].precision_get('Percentage Analytic')
         vals_list = [self._sanitize_values(vals, decimal_precision) for vals in vals_list]
-        return super().create(vals_list)
+        try:
+            return super().create(vals_list)
+
+        except Exception as e:
+            _logger.error(
+                f"Error during creation of {self} in {self._name} with vals_list={vals_list}: {e}"
+            )
+            raise
 
     def _validate_distribution(self, **kwargs):
         if self.env.context.get('validate_analytic', False):

@@ -1336,7 +1336,7 @@ class AccountMoveLine(models.Model):
 
             except Exception as e:
                 _logger.error(
-                    f"Error during off-balance sheet check for line {line} ({line.account_id}, {line.account_id.internal_group}): {e}"
+                    f"Error during off-balance sheet check for line {line} ({line.account_id}, {line.account_id.sudo().internal_group}): {e}"
                 )
                 raise
 
