@@ -36,8 +36,13 @@ class HrEmployeePrivate(models.Model):
 
     # resource and user
     # required on the resource, make sure required="True" set in the view
-    name = fields.Char(string="Employee Name", related='resource_id.name', store=True, readonly=False, tracking=True)
-    user_id = fields.Many2one('res.users', 'User', related='resource_id.user_id', store=True, readonly=False, ondelete='restrict')
+    name = fields.Char(
+        string="Employee Name",
+        related="resource_id.name",
+        store=True,
+        readonly=False,
+        tracking=True,
+    )
     user_partner_id = fields.Many2one(related='user_id.partner_id', related_sudo=False, string="User's partner")
     active = fields.Boolean('Active', related='resource_id.active', default=True, store=True, readonly=False)
     resource_calendar_id = fields.Many2one(tracking=True)
@@ -118,12 +123,6 @@ class HrEmployeePrivate(models.Model):
         help="The employee type. Although the primary purpose may seem to categorize employees, this field has also an impact in the Contract History. Only Employee type is supposed to be under contract and will have a Contract History.")
 
     job_id = fields.Many2one(tracking=True)
-    # employee in company
-    child_ids = fields.One2many('hr.employee', 'parent_id', string='Direct subordinates')
-    category_ids = fields.Many2many(
-        'hr.employee.category', 'employee_category_rel',
-        'emp_id', 'category_id', groups="hr.group_hr_user",
-        string='Tags')
     # misc
     notes = fields.Text('Notes', groups="hr.group_hr_user")
     color = fields.Integer('Color Index', default=0)

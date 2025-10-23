@@ -38,11 +38,24 @@ class HrEmployeeBase(models.AbstractModel):
     work_email = fields.Char('Work Email', compute="_compute_work_contact_details", store=True, inverse='_inverse_work_contact_details')
     work_contact_id = fields.Many2one('res.partner', 'Work Contact', copy=False)
     work_location_id = fields.Many2one('hr.work.location', 'Work Location', domain="[('address_id', '=', address_id)]")
-    user_id = fields.Many2one('res.users')
+    user_id = fields.Many2one(
+        "res.users",
+        "User",
+        related="resource_id.user_id",
+        store=True,
+        readonly=False,
+        ondelete="restrict",
+    )
     resource_id = fields.Many2one('resource.resource')
     resource_calendar_id = fields.Many2one('resource.calendar', check_company=True)
-    parent_id = fields.Many2one('hr.employee', 'Manager', compute="_compute_parent_id", store=True, readonly=False,
-        domain="['|', ('company_id', '=', False), ('company_id', 'in', allowed_company_ids)]")
+    parent_id = fields.Many2one(
+        "hr.employee",
+        "Manager",
+        compute="_compute_parent_id",
+        store=True,
+        readonly=False,
+        domain="['|', ('company_id', '=', False), ('company_id', 'in', allowed_company_ids)]",
+    )
     coach_id = fields.Many2one(
         'hr.employee', 'Coach', compute='_compute_coach', store=True, readonly=False,
         check_company=True,
@@ -65,6 +78,18 @@ class HrEmployeeBase(models.AbstractModel):
         ('presence_undetermined', 'Undetermined')], compute='_compute_presence_icon')
     show_hr_icon_display = fields.Boolean(compute='_compute_presence_icon')
     newly_hired = fields.Boolean('Newly Hired', compute='_compute_newly_hired', search='_search_newly_hired')
+    # employee in company
+    child_ids = fields.One2many(
+        "hr.employee", "parent_id", string="Direct subordinates"
+    )
+    category_ids = fields.Many2many(
+        "hr.employee.category",
+        "employee_category_rel",
+        "emp_id",
+        "category_id",
+        groups="hr.group_hr_user",
+        string="Tags",
+    )
 
     @api.model
     def _get_new_hire_field(self):
@@ -89,7 +114,6 @@ class HrEmployeeBase(models.AbstractModel):
 
         op = 'in' if value and operator == '=' or not value and operator != '=' else 'not in'
         return [('id', op, new_hires.ids)]
-
 
     def _get_valid_employee_for_user(self):
         user = self.env.user
