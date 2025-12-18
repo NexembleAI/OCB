@@ -144,9 +144,28 @@ DOMAIN_OPERATORS = (NOT_OPERATOR, OR_OPERATOR, AND_OPERATOR)
 # only one representation).
 # Internals (i.e. not available to the user) 'inselect' and 'not inselect'
 # operators are also used. In this case its right operand has the form (subselect, params).
-TERM_OPERATORS = ('=', '!=', '<=', '<', '>', '>=', '=?', '=like', '=ilike',
-                  'like', 'not like', 'ilike', 'not ilike', 'in', 'not in',
-                  'child_of', 'parent_of', 'any', 'not any')
+TERM_OPERATORS = (
+    "=",
+    "!=",
+    "<=",
+    "<",
+    ">",
+    ">=",
+    "=?",
+    "=like",
+    "=ilike",
+    "like",
+    "not like",
+    "ilike",
+    "not ilike",
+    "in",
+    "not in",
+    "child_of",
+    "parent_of",
+    "family_of",
+    "any",
+    "not any",
+)
 
 # A subset of the above operators, with a 'negative' semantic. When the
 # expressions 'in NEGATIVE_TERM_OPERATORS' or 'not in NEGATIVE_TERM_OPERATORS' are used in the code
@@ -949,8 +968,60 @@ class expression(object):
                 return [(left, 'in', left_model_sudo._search(domain))]
             return domain
 
-        HIERARCHY_FUNCS = {'child_of': child_of_domain,
-                           'parent_of': parent_of_domain}
+        def family_of_domain(left, ids, left_model, parent=None, prefix=""):
+            """Return a domain implementing the family_of operator for [(left,family_of,ids)],
+            either as a range using the parent_path tree lookup field
+            (when available), or as an expanded [(left,in,parent_ids)]"""
+            ids = [id for id in ids if id]  # ignore (left, 'family_of', [False])
+            if not ids:
+                return [FALSE_LEAF]
+            left_model_sudo = left_model.sudo().with_context(active_test=False)
+            if left_model._parent_store:
+                parent_ids = [
+                    int(label)
+                    for rec in left_model_sudo.browse(ids)
+                    for label in rec.parent_path.split("/")[:-1]
+                ]
+                # domain = [('id', 'in', parent_ids)]
+            else:
+                # recursively retrieve all parent nodes with sudo() to avoid
+                # access rights errors; the filtering of forbidden records is
+                # done by the rest of the domain
+                parent_name = parent or left_model._parent_name
+                parent_ids = set()
+                records = left_model_sudo.browse(ids)
+                while records:
+                    parent_ids.update(records._ids)
+                    records = records[parent_name] - records.browse(parent_ids)
+                # domain = [('id', 'in', list(parent_ids))]
+
+            # now retrieve all children of the parent_ids
+            if left_model._parent_store:
+                domain = OR(
+                    [
+                        [("parent_path", "=like", rec.parent_path + "%")]
+                        for rec in left_model_sudo.browse(parent_ids)
+                    ]
+                )
+            else:
+                child_ids = set()
+                records = left_model_sudo.browse(parent_ids)
+                while records:
+                    child_ids.update(records._ids)
+                    records = records.search(
+                        [(parent_name, "in", records.ids)], order="id"
+                    ) - records.browse(child_ids)
+                domain = [("id", "in", list(child_ids))]
+
+            if prefix:
+                return [(left, "in", left_model_sudo._search(domain))]
+            return domain
+
+        HIERARCHY_FUNCS = {
+            "child_of": child_of_domain,
+            "parent_of": parent_of_domain,
+            "family_of": family_of_domain,
+        }
 
         def pop():
             """ Pop a leaf to process. """

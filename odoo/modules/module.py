@@ -366,7 +366,11 @@ def get_manifest(module, mod_path=None):
         when the manifest was not found.
     :rtype: dict
     """
-    return copy.deepcopy(_get_manifest_cached(module, mod_path))
+    try:
+        return copy.deepcopy(_get_manifest_cached(module, mod_path))
+    except Exception as e:
+        _logger.error("Failed to load manifest for module %s: %s", module, e)
+        raise
 
 @functools.lru_cache(maxsize=None)
 def _get_manifest_cached(module, mod_path=None):

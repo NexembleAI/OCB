@@ -190,6 +190,33 @@ def check_company_domain_parent_of(self, companies):
     ])]
 
 
+def check_company_domain_family_of(self, companies):
+    if isinstance(companies, str):
+        return [
+            "|",
+            ("company_id", "=", False),
+            ("company_id", "family_of", [companies]),
+        ]
+
+    companies = [id for id in to_company_ids(companies) if id]
+    if not companies:
+        return [("company_id", "=", False)]
+
+    return [
+        "|",
+        ("company_id", "=", False),
+        (
+            "company_id",
+            "in",
+            [
+                int(parent)
+                for rec in self.env["res.company"].sudo().browse(companies)
+                for parent in rec.parent_path.split("/")[:-1]
+            ],
+        ),
+    ]
+
+
 class MetaModel(api.Meta):
     """ The metaclass of all model classes.
         Its main purpose is to register the models per module.
@@ -6237,13 +6264,22 @@ class BaseModel(metaclass=MetaModel):
                 stack.append(set())
             else:
                 (key, comparator, value) = leaf
-                if comparator in ('child_of', 'parent_of'):
+                if comparator in ("child_of", "parent_of", "family_of"):
                     if key == 'company_id':  # avoid an explicit search
                         value_companies = self.env['res.company'].browse(value)
                         if comparator == 'child_of':
                             stack.append({record.id for record in self if record.company_id.parent_ids & value_companies})
-                        else:
+                        elif comparator == "parent_of":
                             stack.append({record.id for record in self if record.company_id & value_companies.parent_ids})
+                        else:
+                            stack.append(
+                                {
+                                    record.id
+                                    for record in self
+                                    if (record.company_id & value_companies.parent_ids)
+                                    | (record.company_id.parent_ids & value_companies)
+                                }
+                            )
                     else:
                         stack.append(set(self.with_context(active_test=False).search([('id', 'in', self.ids), leaf], order='id')._ids))
                     continue
