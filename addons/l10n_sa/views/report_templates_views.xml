@@ -5,7 +5,7 @@
             <span t-out="additional_footer_text"/>
         </div>
     </template>
-    <template id="l10n_sa_external_layout_striped" inherit_id="web.external_layout_striped">
+    <!-- <template id="l10n_sa_external_layout_striped" inherit_id="web.external_layout_striped">
         <div class="text-center" position="inside">
             <t t-call="l10n_sa.l10n_sa_additional_footer"/>
         </div>
@@ -24,5 +24,5 @@
         <div class="text-center" position="inside">
             <t t-call="l10n_sa.l10n_sa_additional_footer"/>
         </div>
-    </template>
+    </template> -->
 </odoo>
