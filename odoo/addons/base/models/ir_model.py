@@ -2047,23 +2047,27 @@ class IrModelAccess(models.Model):
             document_kind = self.env['ir.model']._get(model).name or model
             msg_heads = {
                 # Messages are declared in extenso so they are properly exported in translation terms
-                'read': _lt(
-                    "You are not allowed to access '%(document_kind)s' (%(document_model)s) records.",
+                "read": _lt(
+                    "You (%(user)s) are not allowed to access '%(document_kind)s' (%(document_model)s) records.",
+                    user=self.env.user,
                     document_kind=document_kind,
                     document_model=model,
                 ),
-                'write':  _lt(
-                    "You are not allowed to modify '%(document_kind)s' (%(document_model)s) records.",
+                "write": _lt(
+                    "You (%(user)s) are not allowed to modify '%(document_kind)s' (%(document_model)s) records.",
+                    user=self.env.user,
                     document_kind=document_kind,
                     document_model=model,
                 ),
-                'create': _lt(
-                    "You are not allowed to create '%(document_kind)s' (%(document_model)s) records.",
+                "create": _lt(
+                    "You (%(user)s) are not allowed to create '%(document_kind)s' (%(document_model)s) records.",
+                    user=self.env.user,
                     document_kind=document_kind,
                     document_model=model,
                 ),
-                'unlink': _lt(
-                    "You are not allowed to delete '%(document_kind)s' (%(document_model)s) records.",
+                "unlink": _lt(
+                    "You (%(user)s) are not allowed to delete '%(document_kind)s' (%(document_model)s) records.",
+                    user=self.env.user,
                     document_kind=document_kind,
                     document_model=model,
                 ),
@@ -2090,7 +2094,6 @@ class IrModelAccess(models.Model):
             raise AccessError(msg) from None
 
         return has_access
-
 
     @api.model
     def call_cache_clearing_methods(self):
