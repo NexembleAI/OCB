@@ -13,6 +13,9 @@ from odoo.osv import expression
 from odoo.tools import format_amount, format_date, formatLang, groupby
 from odoo.tools.float_utils import float_is_zero
 from odoo.exceptions import UserError, ValidationError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class PurchaseOrder(models.Model):
@@ -514,9 +517,13 @@ class PurchaseOrder(models.Model):
 
     def button_cancel(self):
         for order in self:
+            total_amount = 0.0
             for inv in order.invoice_ids:
                 if inv and inv.state not in ('cancel', 'draft'):
-                    raise UserError(_("Unable to cancel this purchase order. You must first cancel the related vendor bills."))
+                    total_amount += inv.amount_untaxed_signed
+            if not float_is_zero(total_amount, precision_rounding=order.currency_id.rounding):
+                _logger.error(f"PO {order.name} has total amount {total_amount} in invoices")
+                raise UserError("You cannot cancel the purchase order because there are invoices associated with it.")
 
         self.write({'state': 'cancel', 'mail_reminder_confirmed': False})
 
