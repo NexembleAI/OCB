@@ -1202,7 +1202,7 @@ class Website(models.Model):
 
     @api.model
     def is_public_user(self):
-        return request.env.user.id == request.website._get_cached('user_id')
+        return request.env.user and request.env.user.id and request.env.user.id == request.website._get_cached('user_id')
 
     @api.model
     def viewref(self, view_id, raise_if_not_found=True):
