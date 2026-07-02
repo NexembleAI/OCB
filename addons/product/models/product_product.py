@@ -3,6 +3,9 @@
 
 import re
 from operator import itemgetter
+import logging
+
+logger = logging.getLogger(__name__)
 
 from odoo import api, fields, models, tools, _
 from odoo.exceptions import ValidationError
@@ -373,6 +376,7 @@ class ProductProduct(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        logger.info(f"Creating {len(vals_list)} product.product records: {vals_list}")
         products = super(ProductProduct, self.with_context(create_product_product=False)).create(vals_list)
         # `_get_variant_id_for_combination` depends on existing variants
         self.env.registry.clear_cache()
@@ -657,7 +661,7 @@ class ProductProduct(models.Model):
             )
         return super().view_header_get(view_id, view_type)
 
-    #=== ACTION METHODS ===#
+    # === ACTION METHODS ===#
 
     def action_open_label_layout(self):
         action = self.env['ir.actions.act_window']._for_xml_id('product.action_open_label_layout')
@@ -706,7 +710,7 @@ class ProductProduct(models.Model):
         })
         return res
 
-    #=== BUSINESS METHODS ===#
+    # === BUSINESS METHODS ===#
 
     def _prepare_sellers(self, params=False):
         sellers = self.seller_ids._get_filtered_supplier(self.env.company, self, params)

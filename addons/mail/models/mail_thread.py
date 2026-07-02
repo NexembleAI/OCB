@@ -291,6 +291,12 @@ class MailThread(models.AbstractModel):
             threads._track_discard()
             return threads
 
+        _logger.info(
+            "Creating %s records in %s with vals_list: %s",
+            len(vals_list),
+            self._name,
+            vals_list,
+        )
         threads = super(MailThread, self).create(vals_list)
         # subscribe uid unless asked not to
         if not self._context.get('mail_create_nosubscribe') and threads and self.env.user.active:

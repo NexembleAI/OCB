@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from difflib import SequenceMatcher
+import logging
+
+_logger = logging.getLogger(__name__)
 
 from odoo import api, Command, fields, models, _
 from odoo.exceptions import ValidationError
@@ -13,59 +16,85 @@ ACCOUNT_DOMAIN = "['&', ('deprecated', '=', False), ('account_type', 'not in', (
 class ProductCategory(models.Model):
     _inherit = "product.category"
 
-    property_account_income_categ_id = fields.Many2one('account.account', company_dependent=True,
+    property_account_income_categ_id = fields.Many2one(
+        "account.account",
+        company_dependent=True,
         string="Income Account",
         domain=ACCOUNT_DOMAIN,
         help="This account will be used when validating a customer invoice.",
         tracking=True,
-        ondelete='restrict',
+        ondelete="restrict",
     )
-    property_account_expense_categ_id = fields.Many2one('account.account', company_dependent=True,
+    property_account_expense_categ_id = fields.Many2one(
+        "account.account",
+        company_dependent=True,
         string="Expense Account",
         domain=ACCOUNT_DOMAIN,
         help="The expense is accounted for when a vendor bill is validated, except in anglo-saxon accounting with perpetual inventory valuation in which case the expense (Cost of Goods Sold account) is recognized at the customer invoice validation.",
         tracking=True,
-        ondelete='restrict',
+        ondelete="restrict",
     )
 
-#----------------------------------------------------------
+
+# ----------------------------------------------------------
 # Products
-#----------------------------------------------------------
+# ----------------------------------------------------------
 class ProductTemplate(models.Model):
     _inherit = "product.template"
 
-    taxes_id = fields.Many2many('account.tax', 'product_taxes_rel', 'prod_id', 'tax_id',
+    taxes_id = fields.Many2many(
+        "account.tax",
+        "product_taxes_rel",
+        "prod_id",
+        "tax_id",
         string="Sales Taxes",
         help="Default taxes used when selling the product",
-        domain=[('type_tax_use', '=', 'sale')],
-        default=lambda self: self.env.companies.account_sale_tax_id or self.env.companies.root_id.sudo().account_sale_tax_id,
+        domain=[("type_tax_use", "=", "sale")],
+        default=lambda self: self.env.companies.account_sale_tax_id
+        or self.env.companies.root_id.sudo().account_sale_tax_id,
     )
-    tax_string = fields.Char(compute='_compute_tax_string')
-    supplier_taxes_id = fields.Many2many('account.tax', 'product_supplier_taxes_rel', 'prod_id', 'tax_id',
+    tax_string = fields.Char(compute="_compute_tax_string")
+    supplier_taxes_id = fields.Many2many(
+        "account.tax",
+        "product_supplier_taxes_rel",
+        "prod_id",
+        "tax_id",
         string="Purchase Taxes",
         help="Default taxes used when buying the product",
-        domain=[('type_tax_use', '=', 'purchase')],
-        default=lambda self: self.env.companies.account_purchase_tax_id or self.env.companies.root_id.sudo().account_purchase_tax_id,
+        domain=[("type_tax_use", "=", "purchase")],
+        default=lambda self: self.env.companies.account_purchase_tax_id
+        or self.env.companies.root_id.sudo().account_purchase_tax_id,
     )
-    property_account_income_id = fields.Many2one('account.account', company_dependent=True, ondelete='restrict',
+    property_account_income_id = fields.Many2one(
+        "account.account",
+        company_dependent=True,
+        ondelete="restrict",
         string="Income Account",
         domain=ACCOUNT_DOMAIN,
-        help="Keep this field empty to use the default value from the product category.")
-    property_account_expense_id = fields.Many2one('account.account', company_dependent=True, ondelete='restrict',
+        help="Keep this field empty to use the default value from the product category.",
+    )
+    property_account_expense_id = fields.Many2one(
+        "account.account",
+        company_dependent=True,
+        ondelete="restrict",
         string="Expense Account",
         domain=ACCOUNT_DOMAIN,
-        help="Keep this field empty to use the default value from the product category. If anglo-saxon accounting with automated valuation method is configured, the expense account on the product category will be used.")
+        help="Keep this field empty to use the default value from the product category. If anglo-saxon accounting with automated valuation method is configured, the expense account on the product category will be used.",
+    )
     account_tag_ids = fields.Many2many(
         string="Account Tags",
-        comodel_name='account.account.tag',
+        comodel_name="account.account.tag",
         domain="[('applicability', '=', 'products')]",
-        help="Tags to be set on the base and tax journal items created for this product.")
-    fiscal_country_codes = fields.Char(compute='_compute_fiscal_country_codes')
+        help="Tags to be set on the base and tax journal items created for this product.",
+    )
+    fiscal_country_codes = fields.Char(compute="_compute_fiscal_country_codes")
 
     def _get_product_accounts(self):
         return {
-            'income': self.property_account_income_id or self._get_category_account('property_account_income_categ_id'),
-            'expense': self.property_account_expense_id or self._get_category_account('property_account_expense_categ_id')
+            "income": self.property_account_income_id
+            or self._get_category_account("property_account_income_categ_id"),
+            "expense": self.property_account_expense_id
+            or self._get_category_account("property_account_expense_categ_id"),
         }
 
     def _get_category_account(self, field_name):
@@ -79,29 +108,33 @@ class ProductTemplate(models.Model):
             if account:
                 return account
             categ = categ.parent_id
-        return self.env['account.account']
+        return self.env["account.account"]
 
     def _get_asset_accounts(self):
         res = {}
-        res['stock_input'] = False
-        res['stock_output'] = False
+        res["stock_input"] = False
+        res["stock_output"] = False
         return res
 
     def get_product_accounts(self, fiscal_pos=None):
         return {
-            key: (fiscal_pos or self.env['account.fiscal.position']).map_account(account)
+            key: (fiscal_pos or self.env["account.fiscal.position"]).map_account(
+                account
+            )
             for key, account in self._get_product_accounts().items()
         }
 
-    @api.depends('company_id')
-    @api.depends_context('allowed_company_ids')
+    @api.depends("company_id")
+    @api.depends_context("allowed_company_ids")
     def _compute_fiscal_country_codes(self):
         for record in self:
             allowed_companies = record.company_id or self.env.companies
-            record.fiscal_country_codes = ",".join(allowed_companies.mapped('account_fiscal_country_id.code'))
+            record.fiscal_country_codes = ",".join(
+                allowed_companies.mapped("account_fiscal_country_id.code")
+            )
 
-    @api.depends('taxes_id', 'list_price')
-    @api.depends_context('company')
+    @api.depends("taxes_id", "list_price")
+    @api.depends_context("company")
     def _compute_tax_string(self):
         for record in self:
             record.tax_string = record._construct_tax_string(record.list_price)
@@ -109,25 +142,36 @@ class ProductTemplate(models.Model):
     def _construct_tax_string(self, price):
         currency = self.currency_id
         res = self.taxes_id._filter_taxes_by_company(self.env.company).compute_all(
-            price, product=self, partner=self.env['res.partner']
+            price, product=self, partner=self.env["res.partner"]
         )
         joined = []
-        included = res['total_included']
+        included = res["total_included"]
         if currency.compare_amounts(included, price):
-            joined.append(_('%(amount)s Incl. Taxes', amount=format_amount(self.env, included, currency)))
-        excluded = res['total_excluded']
+            joined.append(
+                _(
+                    "%(amount)s Incl. Taxes",
+                    amount=format_amount(self.env, included, currency),
+                )
+            )
+        excluded = res["total_excluded"]
         if currency.compare_amounts(excluded, price):
-            joined.append(_('%(amount)s Excl. Taxes', amount=format_amount(self.env, excluded, currency)))
+            joined.append(
+                _(
+                    "%(amount)s Excl. Taxes",
+                    amount=format_amount(self.env, excluded, currency),
+                )
+            )
         if joined:
             tax_string = f"(= {', '.join(joined)})"
         else:
             tax_string = " "
         return tax_string
 
-    @api.constrains('uom_id')
+    @api.constrains("uom_id")
     def _check_uom_not_in_invoice(self):
-        self.env['product.template'].flush_model(['uom_id'])
-        self._cr.execute("""
+        self.env["product.template"].flush_model(["uom_id"])
+        self._cr.execute(
+            """
             SELECT prod_template.id
               FROM account_move_line line
               JOIN product_product prod_variant ON line.product_id = prod_variant.id
@@ -140,39 +184,47 @@ class ProductTemplate(models.Model):
                AND line.parent_state = 'posted'
                AND template_uom_cat.id != line_uom_cat.id
              LIMIT 1
-        """, [tuple(self.ids)])
+        """,
+            [tuple(self.ids)],
+        )
         if self._cr.fetchall():
-            raise ValidationError(_(
-                "This product is already being used in posted Journal Entries.\n"
-                "If you want to change its Unit of Measure, please archive this product and create a new one."
-            ))
+            raise ValidationError(
+                _(
+                    "This product is already being used in posted Journal Entries.\n"
+                    "If you want to change its Unit of Measure, please archive this product and create a new one."
+                )
+            )
 
-    @api.onchange('type')
+    @api.onchange("type")
     def _onchange_type(self):
-        if self.type == 'combo':
+        if self.type == "combo":
             self.taxes_id = False
             self.supplier_taxes_id = False
         return super()._onchange_type()
 
     def _force_default_sale_tax(self, companies):
-        default_customer_taxes = companies.filtered('account_sale_tax_id').account_sale_tax_id
+        default_customer_taxes = companies.filtered(
+            "account_sale_tax_id"
+        ).account_sale_tax_id
         if not default_customer_taxes:
             return
         links = [Command.link(t.id) for t in default_customer_taxes]
         for sub_ids in self.env.cr.split_for_in_conditions(self.ids, size=10000):
             chunk = self.browse(sub_ids)
-            chunk.write({'taxes_id': links})
-            chunk.invalidate_recordset(['taxes_id'])
+            chunk.write({"taxes_id": links})
+            chunk.invalidate_recordset(["taxes_id"])
 
     def _force_default_purchase_tax(self, companies):
-        default_supplier_taxes = companies.filtered('account_purchase_tax_id').account_purchase_tax_id
+        default_supplier_taxes = companies.filtered(
+            "account_purchase_tax_id"
+        ).account_purchase_tax_id
         if not default_supplier_taxes:
             return
         links = [Command.link(t.id) for t in default_supplier_taxes]
         for sub_ids in self.env.cr.split_for_in_conditions(self.ids, size=10000):
             chunk = self.browse(sub_ids)
-            chunk.write({'supplier_taxes_id': links})
-            chunk.invalidate_recordset(['supplier_taxes_id'])
+            chunk.write({"supplier_taxes_id": links})
+            chunk.invalidate_recordset(["supplier_taxes_id"])
 
     def _force_default_tax(self, companies):
         self._force_default_sale_tax(companies)
@@ -180,6 +232,13 @@ class ProductTemplate(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        _logger.info(f"Creating {len(vals_list)} product.template records: {vals_list}")
+        if (
+            "company_id" in vals_list[0]
+            and isinstance(vals_list[0]["company_id"], int) is False
+        ):
+            vals_list[0]["company_id"] = vals_list[0]["company_id"].id
+
         products = super().create(vals_list)
         # If no company was set for the product, the product will be available for all companies and therefore should
         # have the default taxes of the other companies as well. sudo() is used since we're going to need to fetch all
