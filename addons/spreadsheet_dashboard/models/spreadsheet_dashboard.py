@@ -1,7 +1,4 @@
 import json
-import logging
-
-_logger = logging.getLogger(__name__)
 
 from odoo import _, fields, models
 from odoo.tools import file_open
@@ -24,9 +21,7 @@ class SpreadsheetDashboard(models.Model):
 
     def get_readonly_dashboard(self):
         self.ensure_one()
-        _logger.info(
-            f"Getting readonly dashboard for {self.name} (id: {self.id}): {self.spreadsheet_data}"
-        )
+        snapshot = json.loads(self.spreadsheet_data)
         if self._dashboard_is_empty() and self.sample_dashboard_file_path:
             sample_data = self._get_sample_dashboard()
             if sample_data:
@@ -34,7 +29,6 @@ class SpreadsheetDashboard(models.Model):
                     "snapshot": sample_data,
                     "is_sample": True,
                 }
-        snapshot = json.loads(self.spreadsheet_data)
         user_locale = self.env['res.lang']._get_user_spreadsheet_locale()
         snapshot.setdefault('settings', {})['locale'] = user_locale
         default_currency = self.env['res.currency'].get_company_currency_for_spreadsheet()

@@ -371,12 +371,7 @@ class Cursor(BaseCursor):
             res = self._obj.execute(query, params)
         except Exception as e:
             if log_exceptions:
-                _logger.error(
-                    "bad query: %s with params: %s\nERROR: %s",
-                    self._obj.query or query,
-                    params,
-                    e,
-                )
+                _logger.error("bad query: %s\nERROR: %s", self._obj.query or query, e)
             raise
         finally:
             delay = real_time() - start

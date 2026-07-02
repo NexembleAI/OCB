@@ -590,10 +590,10 @@
                 <xpath expr="//t[@t-set='lost_ribbon']" position="after">
                     <t t-set="won_ribbon" t-value="record.active.raw_value and record.probability and record.probability.raw_value == 100"/>
                 </xpath>
-                <!-- <xpath expr="//widget" position="replace">
+                <xpath expr="//widget" position="replace">
                     <widget t-if="won_ribbon" name="web_ribbon" title="Won" bg_color="text-bg-success" invisible="(probability &gt; 0 or active) and (probability &lt; 100 or not active)"/>
                     <widget t-if="lost_ribbon" name="web_ribbon" title="Lost" bg_color="text-bg-danger" invisible="(probability &gt; 0 or active) and (probability &lt; 100 or not active)"/>
-                </xpath> -->
+                </xpath>
                 <xpath expr="//div" position="replace">
                     <div>
                         <t t-if="record.prorated_revenue.raw_value">
