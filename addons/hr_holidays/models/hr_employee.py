@@ -144,3 +144,9 @@ class HrEmployee(models.Model):
             return 0
         calendars = self._get_calendars(date_from)
         return calendars[self.id].hours_per_day if calendars[self.id] else 24
+
+
+class HrEmployeePublic(models.Model):
+    _inherit = "hr.employee.public"
+
+    leave_manager_id = fields.Many2one(readonly=True)
