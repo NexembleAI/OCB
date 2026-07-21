@@ -22,12 +22,15 @@ class AccountInvoiceReport(models.Model):
     commercial_partner_id = fields.Many2one('res.partner', string='Main Partner')
     country_id = fields.Many2one('res.country', string="Country")
     invoice_user_id = fields.Many2one('res.users', string='Salesperson', readonly=True)
-    move_type = fields.Selection([
-        ('out_invoice', 'Customer Invoice'),
-        ('in_invoice', 'Vendor Bill'),
-        ('out_refund', 'Customer Credit Note'),
-        ('in_refund', 'Vendor Credit Note'),
-        ], readonly=True)
+    move_type = fields.Selection(
+        [
+            ("out_invoice", "Customer Invoice"),
+            ("in_invoice", "Vendor Bill"),
+            ("out_refund", "Customer Credit Note"),
+            ("in_refund", "Vendor Debit Note"),
+        ],
+        readonly=True,
+    )
     state = fields.Selection([
         ('draft', 'Draft'),
         ('posted', 'Open'),

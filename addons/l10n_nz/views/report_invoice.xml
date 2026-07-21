@@ -11,7 +11,7 @@
                 <span t-elif="o.move_type == 'out_refund' and o.state == 'posted'">Tax Credit Note</span>
                 <span t-elif="o.move_type == 'out_refund' and o.state == 'draft'">Draft Tax Credit Note</span>
                 <span t-elif="o.move_type == 'out_refund' and o.state == 'cancel'">Cancelled Tax Credit Note</span>
-                <span t-elif="o.move_type == 'in_refund'">Tax Vendor Credit Note</span>
+                <span t-elif="o.move_type == 'in_refund'">Tax Vendor Debit Note</span>
                 <span t-elif="o.move_type == 'in_invoice'">Tax Vendor Bill</span>
                 <span t-if="o.name != '/'" t-field="o.name">INV/2024/0001</span>
             </h2>

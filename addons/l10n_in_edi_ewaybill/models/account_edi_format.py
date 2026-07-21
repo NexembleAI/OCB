@@ -425,23 +425,31 @@ class AccountEdiFormat(models.Model):
         rounding_amount = sum(line.balance for line in invoices.line_ids if line.display_type == 'rounding') * sign
         json_payload = {
             # Note:
-            # Customer Invoice, Sales Receipt and Vendor Credit Note are Outgoing
-            # Vendor Bill, Purchase Receipt, and Customer Credit Note are Incoming
+            # Customer Invoice, Sales Receipt and Vendor Debit Note are Outgoing
+            # Vendor Bill, Purchase Receipt, and Customer Debit Note are Incoming
             "supplyType": invoices.is_outbound() and "I" or "O",
             "subSupplyType": invoices.l10n_in_type_id.sub_type_code,
             "docType": invoices.l10n_in_type_id.code,
-            "transactionType": get_transaction_type(seller_details, dispatch_details, buyer_details, ship_to_details),
+            "transactionType": get_transaction_type(
+                seller_details, dispatch_details, buyer_details, ship_to_details
+            ),
             "transDistance": str(invoices.l10n_in_distance),
-            "docNo": invoices.is_purchase_document(include_receipts=True) and invoices.ref or invoices.name,
+            "docNo": invoices.is_purchase_document(include_receipts=True)
+            and invoices.ref
+            or invoices.name,
             "docDate": invoices.date.strftime("%d/%m/%Y"),
             "fromGstin": seller_details.commercial_partner_id.vat or "URP",
             "fromTrdName": seller_details.commercial_partner_id.name,
             "fromAddr1": dispatch_details.street or "",
             "fromAddr2": dispatch_details.street2 or "",
             "fromPlace": dispatch_details.city or "",
-            "fromPincode": dispatch_details.country_id.code == "IN" and int(extract_digits(dispatch_details.zip)) or "",
+            "fromPincode": dispatch_details.country_id.code == "IN"
+            and int(extract_digits(dispatch_details.zip))
+            or "",
             "fromStateCode": int(seller_details.state_id.l10n_in_tin) or "",
-            "actFromStateCode": dispatch_details.state_id.l10n_in_tin and int(dispatch_details.state_id.l10n_in_tin) or "",
+            "actFromStateCode": dispatch_details.state_id.l10n_in_tin
+            and int(dispatch_details.state_id.l10n_in_tin)
+            or "",
             "toGstin": buyer_details.commercial_partner_id.vat or "URP",
             "toTrdName": buyer_details.commercial_partner_id.name,
             "toAddr1": ship_to_details.street or "",
@@ -449,21 +457,43 @@ class AccountEdiFormat(models.Model):
             "toPlace": ship_to_details.city or "",
             "toPincode": int(extract_digits(ship_to_details.zip)),
             "actToStateCode": int(ship_to_details.state_id.l10n_in_tin),
-            "toStateCode": invoices.l10n_in_state_id.l10n_in_tin and int(invoices.l10n_in_state_id.l10n_in_tin) or (
-                buyer_details.state_id.l10n_in_tin or int(buyer_details.state_id.l10n_in_tin) or ""
+            "toStateCode": invoices.l10n_in_state_id.l10n_in_tin
+            and int(invoices.l10n_in_state_id.l10n_in_tin)
+            or (
+                buyer_details.state_id.l10n_in_tin
+                or int(buyer_details.state_id.l10n_in_tin)
+                or ""
             ),
             "itemList": [
-                self._get_l10n_in_edi_ewaybill_line_details(line, line_tax_details, sign)
+                self._get_l10n_in_edi_ewaybill_line_details(
+                    line, line_tax_details, sign
+                )
                 for line, line_tax_details in invoice_line_tax_details.items()
             ],
             "totalValue": self._l10n_in_round_value(tax_details.get("base_amount")),
-            "cgstValue": self._l10n_in_round_value(tax_details_by_code.get("cgst_amount", 0.00)),
-            "sgstValue": self._l10n_in_round_value(tax_details_by_code.get("sgst_amount", 0.00)),
-            "igstValue": self._l10n_in_round_value(tax_details_by_code.get("igst_amount", 0.00)),
-            "cessValue": self._l10n_in_round_value(tax_details_by_code.get("cess_amount", 0.00)),
-            "cessNonAdvolValue": self._l10n_in_round_value(tax_details_by_code.get("cess_non_advol_amount", 0.00)),
-            "otherValue": self._l10n_in_round_value(tax_details_by_code.get("other_amount", 0.00) + rounding_amount),
-            "totInvValue": self._l10n_in_round_value(tax_details.get("base_amount") + tax_details.get("tax_amount") + rounding_amount),
+            "cgstValue": self._l10n_in_round_value(
+                tax_details_by_code.get("cgst_amount", 0.00)
+            ),
+            "sgstValue": self._l10n_in_round_value(
+                tax_details_by_code.get("sgst_amount", 0.00)
+            ),
+            "igstValue": self._l10n_in_round_value(
+                tax_details_by_code.get("igst_amount", 0.00)
+            ),
+            "cessValue": self._l10n_in_round_value(
+                tax_details_by_code.get("cess_amount", 0.00)
+            ),
+            "cessNonAdvolValue": self._l10n_in_round_value(
+                tax_details_by_code.get("cess_non_advol_amount", 0.00)
+            ),
+            "otherValue": self._l10n_in_round_value(
+                tax_details_by_code.get("other_amount", 0.00) + rounding_amount
+            ),
+            "totInvValue": self._l10n_in_round_value(
+                tax_details.get("base_amount")
+                + tax_details.get("tax_amount")
+                + rounding_amount
+            ),
         }
         is_overseas = invoices.l10n_in_gst_treatment in ("overseas", "special_economic_zone")
         if invoices.is_outbound():
@@ -543,7 +573,7 @@ class AccountEdiFormat(models.Model):
             line_details.update({"cessRate": self._l10n_in_round_value(tax_details_by_code.get("cess_rate"))})
         return line_details
 
-    #================================ E-invoice API methods ===========================
+    # ================================ E-invoice API methods ===========================
 
     @api.model
     def _l10n_in_edi_irn_ewaybill_generate(self, company, json_payload):
@@ -573,7 +603,7 @@ class AccountEdiFormat(models.Model):
         }
         return self._l10n_in_edi_connect_to_server(company, url_path="/iap/l10n_in_edi/1/get_ewaybill_by_irn", params=params)
 
-    #=============================== E-waybill API methods ===================================
+    # =============================== E-waybill API methods ===================================
 
     @api.model
     def _l10n_in_edi_ewaybill_no_config_response(self):

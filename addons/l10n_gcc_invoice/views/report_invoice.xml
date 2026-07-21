@@ -37,7 +37,7 @@
                                 Cancelled Credit Note
                             </span>
                             <span t-elif="o.move_type == 'in_refund'">
-                                Vendor Credit Note
+                                Vendor Debit Note
                             </span>
                             <span t-elif="o.move_type == 'in_invoice'">
                                 Vendor Bill

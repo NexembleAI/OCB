@@ -38,7 +38,7 @@ class AccountMove(models.Model):
             elif record.move_type == 'out_refund':
                 record.l10n_din5008_document_title = _('Credit Note')
             elif record.move_type == 'in_refund':
-                record.l10n_din5008_document_title = _('Vendor Credit Note')
+                record.l10n_din5008_document_title = _('Vendor Debit Note')
             elif record.move_type == 'in_invoice':
                 record.l10n_din5008_document_title = _('Vendor Bill')
 
