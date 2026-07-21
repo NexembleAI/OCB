@@ -147,7 +147,7 @@ class AccountMove(models.Model):
             ('out_invoice', 'Customer Invoice'),
             ('out_refund', 'Customer Credit Note'),
             ('in_invoice', 'Vendor Bill'),
-            ('in_refund', 'Vendor Credit Note'),
+            ('in_refund', 'Vendor Debit Note'),
             ('out_receipt', 'Sales Receipt'),
             ('in_receipt', 'Purchase Receipt'),
         ],
@@ -354,7 +354,7 @@ class AccountMove(models.Model):
         string='Recipient Bank',
         compute='_compute_partner_bank_id', store=True, readonly=False,
         help="Bank Account Number to which the invoice will be paid. "
-             "A Company bank account if this is a Customer Invoice or Vendor Credit Note, "
+             "A Company bank account if this is a Customer Invoice or Vendor Debit Note, "
              "otherwise a Partner bank account number.",
         check_company=True,
         tracking=True,
@@ -3621,7 +3621,7 @@ class AccountMove(models.Model):
                 'out_invoice': _('Draft Invoice'),
                 'out_refund': _('Draft Credit Note'),
                 'in_invoice': _('Draft Bill'),
-                'in_refund': _('Draft Vendor Credit Note'),
+                'in_refund': _('Draft Vendor Debit Note'),
                 'out_receipt': _('Draft Sales Receipt'),
                 'in_receipt': _('Draft Purchase Receipt'),
                 'entry': _('Draft Entry'),
